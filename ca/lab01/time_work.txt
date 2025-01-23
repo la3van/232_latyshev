@@ -1,0 +1,5 @@
+java Matrix - 1.6532237920000001
+./matrix - 3.151904
+./matrix_ikj - 1.152385
+./matrix_jki - 4.281095
+python3 matrix.py - 138.959931
