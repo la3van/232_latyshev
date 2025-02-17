@@ -12,3 +12,4 @@ main:
  sub a0, t0, t1 #t2 = x + y
  ecall 
  
+ mul 
