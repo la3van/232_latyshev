@@ -1,0 +1,39 @@
+CC = gcc
+CFLAGS = -Wall -fPIC
+LDFLAGS = -ldl -lm
+
+all: main preload.so
+
+main: fred_override.o john_override.o solution.o bill.o sam.o
+	$(CC) -o main fred_override.o john_override.o solution.o bill.o sam.o -lm
+
+fred_override.o:
+	echo '#include <stdio.h>\nvoid fred(int x) { printf("INTERPOSED fred: %d\\n", x); }' | \
+	$(CC) $(CFLAGS) -xc -c -o fred_override.o -
+
+john_override.o:
+	echo '#include <stdio.h>\n#include <math.h>\nvoid john(double x) { printf("INTERPOSED john: log(%f) = %f\\n", x, log(x)); }' | \
+	$(CC) $(CFLAGS) -xc -c -o john_override.o -
+
+solution.o: solution.c lib.h
+	$(CC) $(CFLAGS) -c solution.c
+
+bill.o: bill.c
+	$(CC) $(CFLAGS) -c bill.c
+
+sam.o: sam.c
+	$(CC) $(CFLAGS) -c sam.c
+
+preload.so: bill_override.o sam_override.o
+	$(CC) -shared -o preload.so bill_override.o sam_override.o $(LDFLAGS)
+
+bill_override.o:
+	echo '#include <stdio.h>\n#include <dlfcn.h>\nvoid bill(char *s) { printf("INTERPOSED bill: %s\\n", s); void (*orig)(char *) = dlsym(RTLD_NEXT, "bill"); if (orig) orig(s); }' | \
+	$(CC) $(CFLAGS) -xc -c -o bill_override.o -
+
+sam_override.o:
+	echo '#include <stdio.h>\n#include <dlfcn.h>\nvoid sam(double x) { printf("INTERPOSED sam: %f\\n", x); void (*orig)(double) = dlsym(RTLD_NEXT, "sam"); if (orig) orig(x); }' | \
+	$(CC) $(CFLAGS) -xc -c -o sam_override.o -
+
+clean:
+	rm -f *.o main preload.so
